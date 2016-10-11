@@ -1,0 +1,13 @@
+= 環境變數 (Environment Variable)
+
+////
+ * Manage Jenkins > System Information > Environment Variables 這些環境變數是從哪來的?
+   ** 繼承 Jenkins 這個 process 啟動時的環境，但 Node 並不會繼承啟動時的環境。
+ * Manage Jenkins > Configure System > Global Properties > Environment variables
+   ** 作用在所有 node 的所有 job，可以覆寫系統的設定
+ * Manage Jenkins > Manage Nodes > Node Properties > Environment variables
+   ** 作用在透過這個 agent 執行的所有 build (因為同一個 job 可以在多個 node 上執行)，可以覆寫 global properties
+ * 所有 node 通用的設定在 Global Properties，而 node 特有的設定則在 Node Properties；Job 則要透過 EnvInject plugin?
+ * 有一些通則，環境變數都以 `${NAME}` 的方式存取。
+////
+

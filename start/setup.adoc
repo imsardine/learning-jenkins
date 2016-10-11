@@ -1,0 +1,63 @@
+= 安裝設定
+
+初學 Jenkins 時，建議下載 WAR 檔直接啟動而不要透過安裝程式，可以避開許多系統、權限的問題。
+
+--------------------------------------------------------------------------------
+$ java -jar jenkins-2.7.2.war
+Running from: /Users/jeremykao/dev/jenkins/jenkins-2.7.2.war
+webroot: $user.home/.jenkins
+...
+Jenkins home directory: /Users/jeremykao/.jenkins found at: $user.home/.jenkins
+...
+INFO: Started ServerConnector@62dae540{HTTP/1.1}{0.0.0.0:8080}
+...
+INFO: Completed initialization
+...
+
+Jenkins initial setup is required. An admin user has been created and a password generated.
+Please use the following password to proceed to installation:
+
+0123456789abcdef0123456789abcdef <2>
+
+This may also be found at: /Users/jeremykao/.jenkins/secrets/initialAdminPassword
+--------------------------------------------------------------------------------
+
+接著就可以在 http://localhost:8080 存取到 Jenkins，首先輸入上面的 administrator password，接著*不要安裝任何建議的 plugin*，建議日後需要用到時才安裝，這有助於瞭解哪些功能是 Jenkins 內建的，哪些功能又是從 plugin 擴充來的。
+
+ 1. Customize Jenkins 選擇 Select plugins to install (而不是預設的 Install suggested plugins)。
+ 2. 下一個畫面按 None 取消所有預設的選取，按 Install 繼續。
++
+image::/images/plugin-selection-none.png[]
++
+ 3. Create First Admin User 建立一個使用者帳號，按 Save and Finish 就可以開始使用 Jenkins。
+
+[TIP]
+====
+Jenkins 預設會在本機所有 IP 的 8080 port 服務，`JENKINS_HOME` 預設在 `~/.jenkins`，若有需要可以分別用 `JENKINS_HOME` system property 及 `--httpPort` command-line parameter 設定：
+
+----
+$ java [-DJENKINS_HOME=<HOME_DIR>] -jar jenkins.war [--httpPort=<HTTP_PORT>]
+----
+
+其中 _HOME_DIR_ 若不存在會自動建立。例如：
+
+----
+$ java -DJENKINS_HOME=/tmp/.jenkins -jar jenkins.war --httpPort=8000
+----
+====
+
+== 語言
+
+Jenkins 的語言要分兩塊來看，一個是使用者透過瀏覽器操作 Jenkins 時看到的語言，另一個是 build 過程中文字訊息的語言。使用者操作 Jenkins 時的語言，預設是由瀏覽器的設定來決定，而 build 的過程中則固定採用系統的語言。
+
+若希望使用者看到的語言不會因瀏覽器的設定而有不同，或是想要指定 build 過程中所採用的語言，但又不想要調整系統的語言，可以安裝 https://wiki.jenkins-ci.org/display/JENKINS/Locale+Plugin[Locale Plugin]。
+
+安裝這個 plugin 後，在 Manage Jenkins > Configure System 會多一個 Locale 區塊：
+
+image::/images/locale-plugin-settings.png[]
+
+ * Default Language - 指定 build 過程中所採用的語言，可以輸入 language/locale code，例如 `en`、`en_US`。
+ * Ignore browser preference and force this language to all users - 忽略使用者瀏覽器的設定，採用上面指定的 default language。
+
+這個 plugin 看似無關緊要，但在多語言的環境 (multi-lingual environment)，例如把工作同時派發到多個節點時 (系統的語言可能不同)，讓不同節點輸出的文字訊息都採用相同的語言就很重要。
+

@@ -1,0 +1,171 @@
+= Summary
+
+ * link:README.adoc[前言]
+ * link:start/README.adoc[新手上路]
+   ** link:start/setup.adoc[安裝設定]
+ * link:multi-configuration-projects.adoc[多重設定專案]
+ * link:environment-variables.adoc[環境變數]
+ * link:shell-scripts.adoc[Shell 腳本]
+ * link:nodes.adoc[節點]
+
+////
+TBD:
+
+ * Build Monitor Plugin
+ * 說明 job 的 4 種 build result；Fail The Build Plugin 初學、測試時很好用
+ * 環境變數的設定、使用時機
+ * Job 的建立，雖然名稱可以包含空白，但這會成為 workspace 的目錄名稱，難保有些工具無法正常運作。
+
+QUESTIONS:
+
+ * Git poll 時的環境，跟實際 build 時，環境是有差的??
+ * Shell script 裡有哪些環境變數可以用?? 這應該用 shell script 無關，因為其他設定也都可以用 `${VAR}` 來存取，並非 script 執行期間才有。
+ * 如何從 shell script 裡設定環境變數?? => 寫到檔案，再用 EnvInject plugin 讀出來
+ * EnvInject Plugin 的使用時機?? 如果也可以作用在 node level，跟內建的 Node Properties 是什麼關係??
+ * Python virtualenv 要怎麼搭配 execute shell 使用? => wrapper 派不上用場，要用 `. path/to/env/bin/activate`
+ * 如何在 post build 執行 shell script??
+ * 用 Simple Theme Plugin 美化 Jenkins??
+ * node 要怎麼解釋?? 首先要能回答 "若 executor 往上加，會有什麼問題?" node 一個可以幫忙做事的 slave，做事情時會佔用某些資源。一個 node 背後可能是 emulator，暫用的資源就是 CPU，所以頂多開 2 ~ 3 個 executor，若一個 node 背後是特定一支實體機，那 executor 就只能是 1，因為不能同時做兩件事。所以 node 應該以背後的 resource 命名 ...
+ * node 邏輯的概念，一台機器可以有多個 node；一個 node 後面若是接著一個 device (利用 node properties 給定 serial number) ... 例設一台機器上接有 Nexus 4 (Andorid 6) 跟 Nexus 5 (Android 7)，那麼 node name 可以分別用 device 命名 `nexus-4` 與 `nexus-5`，而 label 可以分別給 `device android-23` 與 `device android-24)，那麼 
+ * Matrix 裡的 combination filter 怎麼用?? => 是個 Groovy expression
+ * 安裝 Jenkins 一開始的 admin password，日後可以用 `admin` 登入，但權限上跟新建的使用者有什麼差別??
+ * pipeline 是什麼?? 用 Groovy DSL 寫
+ * Jenkins 裡的環境變數是不分大小寫嗎??
+ * Matrix job 如果有 report 的話，是每個 configuration 拆開?? 有機會合併嗎??
+ * Configuration Matrix 的學問很大!! 結果會以 Configurations 來顯示 Add axis > Slaves 似乎可以把工作同時撒到不同機器上，但測試結果可能就無法整合在一起?? => 很意外地，Publish JUnit result 在 job 這一層竟然可以分出不同 configuration 的結果
+ * 為什麼 matrix 會往下發展出子資料夾? => 叫做 "child workspace"，在 workspace 底下，預設是 `${COMBINATION}`，但要怎麼用?? 改用 Git SCM 就不會有找不到 child workspace 的問題，但這樣會 clone 好幾次對嗎??
+ * matrix 其實是撒到不同 executor 上執行，同時間能執行幾個，是由 executor 的數量在控制
+ * Jenkins 跟 node 啟動時的環境變數都會有作用，跟 global properties、node properties 的先後關係是什麼?? 要設定在 Jenkins global/node properties 比較好，還是該機器上的 `bash_profile`?? 後者方便在機器上直接測試，不過這要重啟 node 不太方便；mark this node temporarily offline 會讓現有的 build 跑完嗎??
+ * Manage Jenkins > Manage Nodes > Node Properties > Environment variables 支援 `BASE+EXTRA` 的寫法?? 
+ * Android SDK 可以透過 master 自動安裝到 node 上嗎??
+ * Manage Jenkins > Configure Global Security > Enable security > TCP port for JNLP slave agents 的作用是什麼?? 原理是什麼?? agent 是如何知道怎麼連回 master??
+ * Jenkins > Nodes > Configure > Preventive Node Monitoring 似乎可以用來觀察 disk space 不足的問題??
+ * Node > Remote root directory 是做什麼用的??
+ * agent/node/slave 似乎是通用的說法?? agent 特別指連線程式，node 強調分散，而 slave 則是強調與 master 的差別??
+ * Node 預設的 environment variable 從哪來? 像 PATH 就不太適合繼承，尤其跟 master 的 OS 可能不同??
+ * Management Jenkins > System Information > Environment Variables 這些環境變數是從哪來的??
+ * 以前自稱 Jenkins CI (jenkins-ci.org)，但現在都改稱 automation server，同時支援 CI 跟 CD，這中間的轉變是什麼??
+ * 安裝是用 .war 好，還是透過 package 好?? 在 OS X 上有權限的問題，很不方便?
+ * 如何自己寫 plugin??
+ * 以 Gradle plugin 為例，自己裝，跟透過 Gradle plugin 來裝 gradle，除了有 (main) build step 的差別，這是否意謂著 node 也會自動安裝 JDK、Gradle、Ant 等??
+ * 一開始支援 Maven 是怎麼來的?? 就算是 Ant 也要裝 Ant plugin
+ * 要安裝特定版本的 plugin，到 wiki > archive 下載 `.hpi`，再進 Manage Plugins > Advanced 上傳安裝；可以直接降級 (但要重開 Jenkins)
+
+課程安排：
+
+ * 安裝 Jenkins (WAR)，一開始不裝任何 plugin 有助於瞭解。
+
+Map:
+
+ * 瞭解 Hudson, CruiseControl, Jenkins 的關係
+   ** https://wiki.jenkins-ci.org/display/JENKINS/Awards[Awards - Jenkins - Jenkins Wiki] - 連續得獎
+   ** https://wiki.jenkins-ci.org/pages/viewpage.action?pageId=58001258[Who is using Jenkins? - Jenkins - Jenkins Wiki]
+   ** http://www.google.com/search?ie=UTF-8&q=%22Dashboard+%5BJenkins%5D%22 公開在 Internet 上的 instances，可以學習別人都是怎麼寫測試的??
+ * Build 不一定要 build 出東西來，想成 jobs 比較容易套用在 testing 上
+   ** 覺得 Jekins 的核心應該是 jobs，而 build 只是其中一種 job 而已
+   ** Job 有很多 trigger 的方式?? 如何在 product build 出來後，觸發另一台 testing jobs 開始??
+   ** https://wiki.jenkins-ci.org/display/JENKINS/Build+Pipeline+Plugin[Build Pipeline Plugin - Jenkins - Jenkins Wiki] ??
+ * Jenkins 核心直接支援 Java (Ant, Maven, JUnit)，其他都靠 plugins
+   ** 看來大部份的時間會花在瞭解 plugins 怎麼用?? 跟 Maven 好像
+ * 先把 Jenkings 特有的 terms 搞清楚?? - build, jobs, plugins, reporting, artifacts, ...
+ * 如何將 JUnit 的概念套用到 E2E testing 上?? 是否都要轉成 JUnit/TestNG report??
+ * Installation
+   ** 用一個 Java Hello World 試完，反正 JDK 一定要裝
+   ** 為什麼除了 Windows 以外，也有 native package 可以下載，都會自己安裝成 service 嗎?? (Mac 可以試試)
+   ** LTS (older but stable) - http://jenkins-ci.org/changelog-stable[LTS Changelog | Jenkins CI]
+   ** `JENKINS_HOME` 預設是 `~/.jenkins` (可以從 Manage Jenkins > Configure System 最上面的 Home directory 看出來)
+ * Script Console
+   ** http://<SERVER>/script
+   ** 用 Groovy 寫
+ * Jenkins CLI
+   ** http://<SERVER>/cli
+ * change set
+   ** 會自動從 SCM 整理出 commits?? 看似 Jenkins 會記錄上次的 commit??
+ * JUnit/TestNG reporting
+   ** 所有 plugins 都會將 reporting 轉成 JUnit/TestNG 的格式??
+   ** Test result trend
+ * Slave agents, nodes??
+   ** 分別為 Android 跟 iOS 開 nodes，感覺像是 logical node??
+   ** node 主要的用途是什麼?? 由 master 觸發 node 去做事
+ * Job types
+   ** Build a free-style software project - This is the central feature of Jenkins. Jenkins will build your project, combining any SCM with any build system, and this can be even used for something OTHER THAN SOFTWARE BUILD.
+   ** Build a maven2/3 project - Build a maven 2/3 project. Jenkins takes advantage of your POM files and drastically reduces the configuration. 看來採用 Maven 可以省很多事
+   ** Build multi-configuration project - Suitable for projects that need a large number of different configurations, such as testing on multiple environments, platform-specific builds, etc.
+   ** Monitor an external job - This type of job allows you to record the execution of a process run outside Jenkins, even on a remote machine. This is designed so that you can use Jenkins as a DASHBOARD OF YOUR EXISTING AUTOMATION SYSTEM. See the documentation for more details.
+ * Plugins
+   ** Manage Jenkins > Manage Plugins
+   ** 在 Available 找到 plugin 後直接安裝即可（會自動處理 dependencies 的問題）
+   ** 目前常用的 Git, Robot Framework, HipChat, Email-ext
+ * Source Code Management
+   ** 一開始支援 CVS 跟 Subversion 是因為預裝了 CVS Plugin 跟 Subversion Plugin
+   ** 想當然，Git 的支援就是要裝 http://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin[Git Plugin]
+ * Build trigger
+   ** Build after other projects are built
+   ** Build periodically
+   ** Poll SCM
+ * Start
+   ** 安裝 http://localhost:8080
+   ** 安裝 Git Plugin
+   ** 建一個 bare repo (Hello, Jenkins)
+   ** 利用 Build Now 試過許多功能，看許多畫面...
+   ** 增加 commit，看 changes
+   ** 增加 Publish JUnit test result report
+ * (REST) API - XML/JSON
+   ** 
+ * shell script 一開始就要把所有的環境變數印出來，方便除錯
+////
+
+////
+
+Build preodically:
+
+從問號展開有下面這些說明：
+
+Provides a cron-like feature to periodically execute this project.
+
+This feature is primarily for using Jenkins as a cron replacement, and it is not ideal for continuously building software projects. When people first start continuous integration, they are often so used to the idea of regularly scheduled builds like nightly/weekly that they use this feature. However, the point of continuous integration is to start a build as soon as a change is made, to provide a quick feedback to the change. To do that you need to hook up SCM change notification to Jenkins. CI 正確的做法是有 change 時就馬上 build 並做 test
+
+So, before using this feature, stop and ask yourself if this is really what you want.
+
+This field follows the syntax of cron (with minor differences). Specifically, each line consists of 5 fields separated by TAB or whitespace: 試出來確實支援多行 schedule 的用法
+
+ * MINUTE HOUR DOM MONTH DOW -> 口訣 = 分時日月週
+ * MINUTE - Minutes within the hour (0–59)
+ * HOUR - The hour of the day (0–23)
+ * DOM - The day of the month (1–31)
+ * MONTH - The month (1–12)
+ * DOW - The day of the week (0–7) where 0 and 7 are Sunday. 因此 1 - 6 是直接對應星期一 ~ 六
+
+To specify multiple values for one field, the following operators are available. In the order of precedence,
+
+ * * specifies all valid values
+ * M-N specifies a range of values
+ * M-N/X or */X steps by intervals of X through the specified range or whole valid range
+ * A,B,...,Z enumerates multiple values
+
+To allow periodically scheduled tasks to produce even load on the system, the symbol H (for “hash”) should be used wherever possible. For example, using 0 0 * * * for a dozen daily jobs will cause a large spike at midnight. In contrast, using H H * * * would still execute each job once a day, but not all at the same time, better using limited resources. 用 hash 來錯開不同 jobs 的時間
+
+The H symbol can be used with a range. For example, H H(0-7) * * * means some time between 12:00 AM (midnight) to 7:59 AM. You can also use step intervals with H, with or without ranges.
+
+The H symbol can be thought of as a RANDOM VALUE OVER A RANGE, but it actually is a HASH OF THE JOB NAME, not a random function, so that the value REMAINS STABLE FOR ANY GIVEN PROJECT. 因為 hash 的關係可以平約分散，用 name 來做 hash 還滿合理的
+
+Empty lines and lines that start with # will be ignored as comments. 可以多行，就有機會對平常日跟假日分開處理，例如：
+
+    # run at night on working days, and all day on weekends
+    H 20,1,6 * * 1-5 -> 或 `H 20-23,1-8/5 * * 1-5`，要注意 "20-23,1-8" 兩側不能加 
+    H */5 * * 6-7
+
+In addition, @yearly, @annually, @monthly, @weekly, @daily, @midnight, and @hourly are supported as convenient aliases. These use the hash system for automatic balancing. For example, @hourly is the same as H * * * * and could mean at any time during the hour. @midnight actually means some time between 12:00 AM and 2:59 AM.
+
+Examples:
+
+# every fifteen minutes (perhaps at :07, :22, :37, :52)
+H/15 * * * *
+# every ten minutes in the first half of every hour (three times, perhaps at :04, :14, :24)
+H(0-29)/10 * * * *
+# once every two hours every weekday (perhaps at 10:38 AM, 12:38 PM, 2:38 PM, 4:38 PM)
+H 9-16/2 * * 1-5
+# once a day on the 1st and 15th of every month except December
+H H 1,15 1-11 *
+ 
+////

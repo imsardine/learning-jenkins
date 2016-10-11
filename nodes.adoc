@@ -1,0 +1,17 @@
+= 節點 (Node)
+
+////
+ * 預設有一個 node - master，一個 node 可以有多個 executor
+ * label 跟 usage 的關係；label 可以單純用來為 node 分類，但搭配 Job 裡 "Restrict where this project can be run" 的 Label Expression，可以用來限定哪些 node 只為哪些 job 做事。
+ * Slave 不需要安裝 Jenkins；透過 Manage Jenkins > Manage Nodes 管理。
+ * "# of executors" 可以充份利用 node/slave 的運算資源，但前提是 resource 是可被共享的。若要暫時停用這個 node/slave，可以在 node/slave status page 按 "Mark this node temporarily offline"
+ * "Remote root directory" 是在 slave machine 上專門給 Jenkins 用的 working directory，跟 master 能否存取無關。建議用 absolute path，因為 relative path 的起點會因 slave process 啟動的方式而異。
+ * Usage 有 "Utilize this node as much as possible" 與 "Only build jobs with label restrictions matching this node"；選擇搭配 label 使用時，限定某些 job 才能交付工作給這個 node/savle，在 node/slave status page 也會列出綁定這個 node/slave 的專案 "Projects tied to xxx"。
+ * Labels 同一般 tag 的概念，node/slave 可以設定一或多個 label/tag (用空白隔開，習慣用小寫)；在 job 端，透過 "Restrict where this project can be run" 甚至可以透過複雜邏輯運算決定哪些 node/slave 符合執行條件??
+ * Launch method 有 "Launch slave agents on Unix machines via SSH"、"Launch slave agents via Java Web Start"、"Launch slave via execution of command on the Master"、"Let Jenkins control this Windows slave as a Windows service" 四種選項。
+   * "Launch slave agents on Unix machines via SSH" => Master 透過 SSH 連到 slave 啟動 slave agent。
+   * "Launch slave agents via Java Web Start" => 從 node/slave 連回 master，跟上面 SSH 從 master 連往 slave 的做法相比，要怎麼選擇??
+ * Availability 通常會選 "Keep this slave on-line as much as possible."，其他可以排程、in demand... ^[RIL]^
+ * Node configuration 會覆寫，或完全忽略執行 Jenkins server 時的環境??
+////
+

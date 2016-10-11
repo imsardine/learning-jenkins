@@ -1,0 +1,97 @@
+= Shell 腳本 (Shell Script)
+
+Jenkins 內建一個名叫 Execute shell 的 build step，可以用來執行 shell script。
+
+image::/images/execute-shell.png[]
+
+Command 欄位可以輸入多行的 script。假設內容如下：
+
+----
+echo "WHO=Jenkins" > vars
+source vars
+echo 'Hello, '$WHO'!'
+----
+
+建構過程中的 console log 會像是：
+
+----
+...
+Building on master in workspace /Users/jeremykao/.jenkins/workspace/MyJob <1>
+[MyJob] $ bash -xe /var/folders/1c/_3jhpxmn0cz8mbsf068f116h0000gp/T/hudson6520435793392664572.sh <2>
++ echo WHO=Jenkins
++ source vars
+++ WHO=Jenkins
++ echo 'Hello, Jenkins!'
+Hello, Jenkins!
+Finished: SUCCESS
+----
+<1> 執行 script 時的 current working directory (CWD) 是 workspace。
+<2> Command 欄位的內容會被存成一個 `.sh` 檔，然後透過 `/bin/sh -xe` 執行。
+
+Jenkins 會從環境變數 `PATH` 裡找出 `sh` 的位置 (通常是在 `/bin/sh`)，然後搭配 `-x` 跟 `-e` 兩個參數執行 script：
+
+ * `-x` - 執行每一個 command 前先將它印出，就像這裡的 `+ echo 'Hello, Jenkins!'`，方便除錯。
+ * `-e` - 遇到任一個 command 的 exit status 不是零時，會直接中斷執行，這會讓 build result 變成 failed。
+
+所以，Jenkins 是採用什麼 shell？
+
+== 不確定用什麼 Shell？
+
+事實上，`/bin/sh` 實際對應的 shell 可能會因系統而異，再加上不同 shell 的寫法有些差異，可能引發一些問題。例如執行環境若是 Ubuntu，極有可能遇到 `source` 指令不存在的問題：
+
+----
+[MyJob] $ /bin/sh -xe /tmp/hudson3779760322970381898.sh
++ echo WHO=Jenkins
++ source vars
+/tmp/hudson3779760322970381898.sh: 3: /tmp/hudson3779760322970381898.sh: source: not found
+Build step 'Execute shell' marked build as failure
+Finished: FAILURE
+----
+
+那是因為 Ubuntu 從 6.10 開始，`/bin/sh` 從原本的 `bash` 轉向 `dash`，不支援 Bash 專有的 `source`。就這個例子而言，最簡單的方式就是用標準的 `.` 取代 `source`：
+
+----
+echo "WHO=Jenkins" > vars
+. vars
+echo 'Hello, '$WHO'!'
+----
+
+為了避免上述的不確定性，可以在 script 第一行加上 shebang line，指明採用 Bash：(只會影響當前的 job)
+
+----
+#!/usr/bin/env bash -xe
+echo "WHO=Jenkins" > vars
+source vars
+echo 'Hello, '$WHO'!'
+----
+
+Jenkins 會檢查 script 是否有提供 shebang line，沒有提供時才會採用預設的 `sh`。這裡刻意加上 `-xe` 是為了貼近預設的行為 (但這並非必要) - 印出 command 方便除錯、一遇到 exit status 不是零的 command 就中斷執行。
+
+TIP: 按照相同的方式，宣告對應的 shebang line，就可以直接在 Command 欄位裡寫 Python、Ruby script 等。例如 `#!/usr/bin/env python`。
+
+執行過程中的 console log 像是：
+
+----
+...
+[ShellScripts] $ /usr/bin/env bash -xe /var/folders/1c/_3jhpxmn0cz8mbsf068f116h0000gp/T/hudson2084892352157408969.sh
+Hello, Jenkins!
+Finished: SUCCESS
+----
+
+另外也可以透過 Manage Jenkins > Configure System > Shell > Shell executable，要求 Jenkins 明確採用 `/bin/bash` 執行 shell script。
+
+image::/images/shell-executable.png[]
+
+不過這會影響 shell script 在所有 node 上的執行方式，比較不建議。
+
+[NOTE]
+====
+雖然說 Command 欄位可以寫很多行的 script，但在實務上要儘量避免。
+
+正確的做法應該是把 shell script 寫成檔案並加入版本控制，這裡就只是執行它而已。例如：
+
+----
+bash -ex path/to/script.sh
+----
+====
+
